@@ -1047,8 +1047,8 @@ class BotSession {
                                         case 'premiummenu': {
                                             const categoryName = commandName.replace('menu', '').toUpperCase();
                                             const allMenuCmd = require('./commands/allmenu');
-                                            // We reuse allMenu but could filter it if needed. For now, we'll show the category in a stylized way.
-                                            await allMenuCmd(this.sock, from, msg, this, commands);
+                                            // Fix: Pass categoryName as a filter
+                                            await allMenuCmd(this.sock, from, msg, this, commands, categoryName);
                                             break;
                                         }
 

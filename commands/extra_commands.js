@@ -21,6 +21,10 @@ const extraCommands = {
         const res = await axios.get(`https://api.siputzx.my.id/api/islamic/hadith?book=bukhari`);
         sock.sendMessage(from, { text: `📜 *${toVIP('HADITH')}*\n\n${res.data.data.hadith}\n\n> © 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃` }, { quoted: msg });
     },
+    meme: async (sock, from, msg) => {
+        const res = await axios.get(`https://api.siputzx.my.id/api/tools/meme`);
+        sock.sendMessage(from, { image: { url: res.data.data.url }, caption: `🤡 *${toVIP('MEME')}*` }, { quoted: msg });
+    },
 
     // 🎉 FUN
     joke: async (sock, from, msg) => {
