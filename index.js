@@ -209,7 +209,8 @@ const commands = {
     utils: require('./commands/utils'),
     coins: require('./commands/coins'),
     genimage: require('./commands/genimage'),
-    lookup: require('./commands/lookup')
+    lookup: require('./commands/lookup'),
+    extra: require('./commands/extra_commands')
 };
 
 const { handleAutoread } = require('./commands/autoread');
@@ -671,7 +672,7 @@ class BotSession {
                 syncFullHistory: false,
                 shouldSyncHistoryMessage: () => false,
                 markOnlineOnConnect: true,
-                keep𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑veIntervalMs: 30000,
+                keepAliveIntervalMs: 30000,
                 connectTimeoutMs: 60000,
                 defaultQueryTimeoutMs: 60000,
                 emitOwnEvents: true,
@@ -1033,6 +1034,13 @@ class BotSession {
                                         case 'coins': await commands.coins(this.sock, from, msg, args, botData, saveBotData); break;
                                         case 'genimage': await commands.genimage(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
                                         case 'lookup': await commands.lookup(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
+                                        
+                                        // Handle Extra Commands
+                                        default:
+                                            if (commands.extra[commandName]) {
+                                                await commands.extra[commandName](this.sock, from, msg, q, isOwner, botData, saveBotData);
+                                            }
+                                            break;
 
                                         // ===== ADMIN / OWNER =====
                                         case 'private': 
