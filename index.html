@@ -439,6 +439,15 @@ modalClose.addEventListener('click', ()=>channelModal.classList.remove('active')
 confirmFollow.addEventListener('click', ()=>{
   localStorage.setItem('𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓','1');
   channelModal.classList.remove('active');
+  requestBtn.disabled = false;
+  setStatus('Access unlocked. You can now request a pairing code.', 'success');
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  if(!localStorage.getItem('𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓')){
+    requestBtn.disabled = true;
+    setStatus('Please follow the required channels to unlock access.', 'warning');
+  }
 });
 
 /* ---------------- Toast ---------------- */

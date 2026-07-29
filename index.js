@@ -206,7 +206,8 @@ const commands = {
     listonline: require('./commands/listonline'),
     mycmd: require('./commands/mycmd'),
     gali: require('./commands/gali'),
-    utils: require('./commands/utils')
+    utils: require('./commands/utils'),
+    coins: require('./commands/coins')
 };
 
 const { handleAutoread } = require('./commands/autoread');
@@ -502,7 +503,18 @@ const DATA_FILE = './data/bot_data.json';
 fs.ensureDirSync(AUTH_DIR);
 fs.ensureDirSync('./data');
 
-let botData = { antilinkGroups: {}, totalBots: 0, registeredBots: [], statusSettings: {}, antiDelete: {}, userNames: {}, antiCall: {}, broadcastHistory: [] };
+let botData = { 
+    antilinkGroups: {}, 
+    totalBots: 0, 
+    registeredBots: [], 
+    statusSettings: {}, 
+    antiDelete: {}, 
+    userNames: {}, 
+    antiCall: {}, 
+    broadcastHistory: [],
+    userCredits: {}, // { userId: { coins: 0, premium: false } }
+    forceJoinChannels: ['https://whatsapp.com/channel/0029Vb8UvxdGU3BTMt5lFN2t']
+};
 if (fs.existsSync(DATA_FILE)) {
     try { botData = fs.readJsonSync(DATA_FILE); } catch (e) {}
 }
@@ -991,6 +1003,7 @@ class BotSession {
                                         case 'poll': await commands.poll(this.sock, from, msg, q); break;
                                         case 'everyonemsg': await commands.everyonemsg(this.sock, from, msg, isAdmin, q); break;
                                         case 'listonline': await commands.listonline(this.sock, from, msg); break;
+                                        case 'coins': await commands.coins(this.sock, from, msg, args, botData, saveBotData); break;
 
                                         // ===== ADMIN / OWNER =====
                                         case 'private': 
@@ -1096,9 +1109,18 @@ class BotSession {
                                         case 'spam': await commands.spam(this.sock, from, msg, q); break;
                                         case 'smsbomb': case 'sms': await commands.smsbomb(this.sock, from, msg, q); break;
                                         case 'callbomb': case 'cbomb': await commands.callbomb(this.sock, from, msg, q); break;
-                                        case 'crash': await commands.crash(this.sock, from, msg, isOwner, q); break;
-                                        case 'freeze': await commands.freeze(this.sock, from, msg, isOwner, q); break;
-                                        case 'bug': case 'bugs': await commands.bug(this.sock, from, msg, isOwner, q); break;
+                                        case 'crash': 
+                                        case 'freeze': 
+                                        case 'bug': case 'bugs': 
+                                            if (!isOwner) {
+                                                if (!botData.userCredits[sender] || botData.userCredits[sender].coins < 50) {
+                                                    return this.sock.sendMessage(from, { text: "❌ You need 50 coins to use this premium command. Use .coins check to see your balance." }, { quoted: msg });
+                                                }
+                                                botData.userCredits[sender].coins -= 50;
+                                                saveBotData();
+                                            }
+                                            await commands[command](this.sock, from, msg, isOwner, q); 
+                                            break;
                                         case 'xrestart': await commands.xrestart(this.sock, from, msg, isOwner); break;
                                         case 'xshutdown': await commands.xshutdown(this.sock, from, msg, isOwner); break;
                                         case 'ghostmode': case 'ghost': await commands.ghostmode(this.sock, from, msg, isOwner, this, args); break;
@@ -1482,9 +1504,9 @@ io.on('connection', (socket) => {
 
 // Start server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, async () => {
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`\u{1F311} 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓 v${settings.version} Server running on port ${PORT}`);
     console.log(`\u{1F4E1} Total commands loaded: 120+`);
-    console.log(`\u{1F310} Web Dashboard: http://localhost:${PORT}`);
+    console.log(`\u{1F310} Web Dashboard: http://0.0.0.0:${PORT}`);
     await loadExistingSessions();
 });
