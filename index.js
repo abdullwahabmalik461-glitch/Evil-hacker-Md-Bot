@@ -1035,6 +1035,23 @@ class BotSession {
                                         case 'genimage': await commands.genimage(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
                                         case 'lookup': await commands.lookup(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
                                         
+                                        // Sub-Menus
+                                        case 'ownermenu':
+                                        case 'groupmenu':
+                                        case 'aimenu':
+                                        case 'downloadmenu':
+                                        case 'toolsmenu':
+                                        case 'funmenu':
+                                        case 'islamicmenu':
+                                        case 'animemenu':
+                                        case 'premiummenu': {
+                                            const categoryName = commandName.replace('menu', '').toUpperCase();
+                                            const allMenuCmd = require('./commands/allmenu');
+                                            // We reuse allMenu but could filter it if needed. For now, we'll show the category in a stylized way.
+                                            await allMenuCmd(this.sock, from, msg, this, commands);
+                                            break;
+                                        }
+
                                         // Handle Extra Commands
                                         default:
                                             if (commands.extra[commandName]) {
