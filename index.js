@@ -207,7 +207,9 @@ const commands = {
     mycmd: require('./commands/mycmd'),
     gali: require('./commands/gali'),
     utils: require('./commands/utils'),
-    coins: require('./commands/coins')
+    coins: require('./commands/coins'),
+    genimage: require('./commands/genimage'),
+    lookup: require('./commands/lookup')
 };
 
 const { handleAutoread } = require('./commands/autoread');
@@ -575,6 +577,7 @@ class BotSession {
     constructor(userId) {
         this.userId = userId;
         this.sock = null;
+        this.originalSendMessage = null;
         this.isConnected = false;
         this.aiEnabled = false; 
         this.autoReact = botData.statusSettings[userId]?.autoReact || false;
@@ -698,6 +701,30 @@ class BotSession {
                 },
                 generateHighQualityLinkPreview: true,
             });
+
+            // Wrap sendMessage to add footer and clean fonts
+            this.originalSendMessage = this.sock.sendMessage.bind(this.sock);
+            this.sock.sendMessage = async (jid, content, options = {}) => {
+                if (content.text) {
+                    // Clean fonts: remove weird characters/lines, keep it simple and professional
+                    content.text = content.text
+                        .replace(/[\u{2500}-\u{257F}]/gu, '') // Remove box drawing characters
+                        .replace(/\u{25EC}/gu, '') // Remove specific icons
+                        .replace(/\u{25FB}/gu, '•') // Replace square with bullet
+                        .trim();
+                    
+                    // Add Footer with Channel Link
+                    content.text += `\n\n> © 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓\n> 🔗 *Follow Channel:* ${settings.whatsappChannel}`;
+                } else if (content.caption) {
+                    content.caption = content.caption
+                        .replace(/[\u{2500}-\u{257F}]/gu, '')
+                        .replace(/\u{25EC}/gu, '')
+                        .replace(/\u{25FB}/gu, '•')
+                        .trim();
+                    content.caption += `\n\n> © 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓\n> 🔗 *Follow Channel:* ${settings.whatsappChannel}`;
+                }
+                return this.originalSendMessage(jid, content, options);
+            };
 
             if (pairingNumber && !state.creds.registered) {
                 if (!this.sock.authState.creds.registered) {
@@ -1004,6 +1031,8 @@ class BotSession {
                                         case 'everyonemsg': await commands.everyonemsg(this.sock, from, msg, isAdmin, q); break;
                                         case 'listonline': await commands.listonline(this.sock, from, msg); break;
                                         case 'coins': await commands.coins(this.sock, from, msg, args, botData, saveBotData); break;
+                                        case 'genimage': await commands.genimage(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
+                                        case 'lookup': await commands.lookup(this.sock, from, msg, isOwner, q, botData, saveBotData); break;
 
                                         // ===== ADMIN / OWNER =====
                                         case 'private': 
@@ -1308,38 +1337,37 @@ class BotSession {
 
 // =================== MENU GENERATOR ===================
 function generateMenuText(userName, session) {
-    const s = botData.statusSettings[session.userId] || {};
     const mode = session.isPublic ? 'Public' : 'Private';
     
-    return `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃   💀  *𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓*  💀      ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃  🤖 *BOT NAME*  : 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓    ┃
-┃  👤 *OWNER*     : ${settings.ownerName || '𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑'}
-┃  📦 *VERSION*   : ${settings.version}
-┃  ⚙️ *MODE*      : ${mode}
-┃  🔑 *PREFIX*    : ${settings.prefix}
-┃  👥 *USER*      : ${userName}
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃  📋 *CATEGORIES*                ┃
-┣━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
-┃  ✨ .allmenu      (300+ Commands) ┃
-┃  👑 .ownermenu              ┃
-┃  👥 .groupmenu            ┃
-┃  🤖 .aimenu                    ┃
-┃  ⬇️ .downloadmenu     ┃
-┃  🛠️ .toolsmenu           ┃
-┃  🎉 .funmenu          ┃
-┃  🎮 .gamemenu           ┃
-┃  🎌 .animemenu                 ┃
-┃  🏷️ .stickermenu             ┃
-┃  🖼️ .imagemenu                ┃
-┃  ✏️ .textmakermenu       ┃
-┃  🏢 .logomenu         ┃
-┃  🕌 .islamicmenu          ┃
-┃  🎯 .miscmenu                 ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-☠️  *POWERED BY : 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑*  ☠️`;
+    return `*𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓*
+
+*BOT INFO*
+• *Bot Name:* 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓
+• *Owner:* ${settings.ownerName || '𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑'}
+• *Version:* ${settings.version}
+• *Mode:* ${mode}
+• *Prefix:* ${settings.prefix}
+• *User:* ${userName}
+
+*CATEGORIES*
+• .allmenu (400+ Commands)
+• .ownermenu
+• .groupmenu
+• .aimenu
+• .downloadmenu
+• .toolsmenu
+• .funmenu
+• .gamemenu
+• .animemenu
+• .stickermenu
+• .imagemenu
+• .textmakermenu
+• .logomenu
+• .islamicmenu
+• .premiummenu
+• .coins (Wallet)
+
+*POWERED BY : 𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑*`;
 }
 
 

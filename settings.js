@@ -1,5 +1,5 @@
 module.exports = {
-    startimage: 'https://mhcloud.kesug.com/images/img-20260718-wa0024.jpg',
+    startimage: 'https://mhcloud.kesug.com/images/img-20260718-wa0024.jpg', // Replace with your logo URL
     ownerNumber: process.env.OWNER_NUMBER || '923211331372', // Current Owner Number
     botName: '𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑 𝐌𝐃 𝐁𝐎𝐓',
     ownerName: '𝐄𝐕𝐈𝐋 𝐇𝐀𝐂𝐊𝐄𝐑',
