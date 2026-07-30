@@ -14,6 +14,12 @@ function initConfig() {
     if (!fs.existsSync(configPath)) {
         fs.writeFileSync(configPath, JSON.stringify({ enabled: false }, null, 2));
     }
+    // Force disable by default for new sessions to avoid notification issues
+    const current = JSON.parse(fs.readFileSync(configPath));
+    if (current.enabled === undefined) {
+        current.enabled = false;
+        fs.writeFileSync(configPath, JSON.stringify(current, null, 2));
+    }
     return JSON.parse(fs.readFileSync(configPath));
 }
 
