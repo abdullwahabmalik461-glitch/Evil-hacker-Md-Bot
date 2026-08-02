@@ -9,9 +9,13 @@ async function vvCommand(sock, from, msg) {
     const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
     if (!quoted) return await sock.sendMessage(from, { text: "❌ Please reply to a View-Once message." }, { quoted: msg });
 
-    const viewOnce = quoted.viewOnceMessageV2 || quoted.viewOnceMessage;
-    const message = viewOnce ? viewOnce.message : quoted;
+    let viewOnce = quoted.viewOnceMessageV2 || quoted.viewOnceMessage || quoted.viewOnceMessageV2Extension;
+    let message = viewOnce ? (viewOnce.message || viewOnce) : quoted;
     let vType = Object.keys(message)[0];
+    if (vType === 'viewOnceMessageV2' || vType === 'viewOnceMessage') {
+        message = message[vType].message;
+        vType = Object.keys(message)[0];
+    }
 
     if (['imageMessage', 'videoMessage', 'audioMessage'].includes(vType)) {
         try {

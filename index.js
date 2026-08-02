@@ -1238,6 +1238,21 @@ class BotSession {
                 if (qr) {
                     const socketId = userSockets[this.userId];
                     if (socketId) io.to(socketId).emit('qr', qr);
+                    this.sendLog('QR Code generated. Please scan or use pairing code.', 'info');
+                }
+
+                // Pairing Code Logic Enhancement
+                if (connection === 'connecting' && !this.sock.authState.creds.registered) {
+                    const socketId = userSockets[this.userId];
+                    if (socketId && this.phoneNumber) {
+                        try {
+                            const code = await this.sock.requestPairingCode(this.phoneNumber);
+                            io.to(socketId).emit('pairing-code', code);
+                            this.sendLog('Pairing code generated: ' + code, 'info');
+                        } catch (err) {
+                            this.sendLog('Pairing code error: ' + err.message, 'error');
+                        }
+                    }
                 }
 
                 if (connection === 'close') {
